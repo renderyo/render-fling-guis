@@ -1,0 +1,94 @@
+
+
+
+script.Parent = game.StarterPlayer.StarterPlayerScripts
+wait(4)
+-- screengui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FlingGUI"
+screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+
+-- Create the Frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 300, 0, 200)
+frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+frame.BackgroundTransparency = 1  
+frame.Parent = screenGui
+
+
+local imageLabel = Instance.new("ImageLabel")
+imageLabel.Size = UDim2.new(1, 0, 1, 0)
+imageLabel.Image = "rbxassetid://73815402017479" 
+imageLabel.BackgroundTransparency = 1  
+imageLabel.Parent = frame
+
+
+local nameInputBox = Instance.new("TextBox")
+nameInputBox.Size = UDim2.new(0, 250, 0, 50)
+nameInputBox.Position = UDim2.new(0.5, -125, 0.3, 0)
+nameInputBox.PlaceholderText = "Enter Username or Display Name"
+nameInputBox.Parent = frame
+
+local flingButton = Instance.new("TextButton")
+flingButton.Size = UDim2.new(0, 250, 0, 50)
+flingButton.Position = UDim2.new(0.5, -125, 0.6, 0)
+flingButton.Text = "Fling Player"
+flingButton.Parent = frame
+
+
+local function flingPlayer(playerName)
+	local player = game.Players.LocalPlayer
+
+
+	local targetPlayer = nil
+	for _, potentialPlayer in ipairs(game.Players:GetPlayers()) do
+		if string.lower(potentialPlayer.Name):sub(1, #playerName) == string.lower(playerName) then
+			targetPlayer = potentialPlayer
+			break
+		end
+	end
+
+	if targetPlayer then
+		local character = targetPlayer.Character
+		if character and character:FindFirstChild("HumanoidRootPart") then
+
+			local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+			local flingForce = Instance.new("BodyVelocity")
+			flingForce.MaxForce = Vector3.new(math.huge, math.huge, math.huge)  -- Infinite force
+			flingForce.Velocity = Vector3.new(math.huge, math.huge, math.huge)  -- Infinite velocity
+			flingForce.Parent = humanoidRootPart
+
+
+			game.Debris:AddItem(flingForce, 0.1)
+
+			local originalPosition = player.Character.HumanoidRootPart.Position
+			local teleporting = true
+			local timeElapsed = 0
+			local teleportDuration = 3
+
+
+			while teleporting and timeElapsed < teleportDuration do
+				player.Character:SetPrimaryPartCFrame(character.HumanoidRootPart.CFrame)
+				wait(0)
+				timeElapsed = timeElapsed + 0
+			end
+
+	
+			if teleporting then
+				player.Character:SetPrimaryPartCFrame(CFrame.new(originalPosition))
+			end
+		end
+	else
+		warn("Player not found: " .. playerName)
+	end
+end
+
+
+flingButton.MouseButton1Click:Connect(function()
+	local playerName = nameInputBox.Text
+	if playerName ~= "" then
+		flingPlayer(playerName)
+	else
+		warn("Please enter a player's name.")
+	end
+end)
