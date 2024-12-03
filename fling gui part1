@@ -1,9 +1,7 @@
-
-
-
-script.Parent = game.StarterPlayer.StarterPlayerScripts
+script.Parent =  game.StarterPlayer.StarterPlayerScripts
 wait(4)
--- screengui
+
+-- Create the ScreenGui
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "FlingGUI"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -12,34 +10,63 @@ screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 300, 0, 200)
 frame.Position = UDim2.new(0.5, -150, 0.5, -100)
-frame.BackgroundTransparency = 1  
+frame.BackgroundTransparency = 1  -- Make frame background transparent
 frame.Parent = screenGui
 
-
+-- Create the ImageLabel inside the Frame to display the image
 local imageLabel = Instance.new("ImageLabel")
 imageLabel.Size = UDim2.new(1, 0, 1, 0)
-imageLabel.Image = "rbxassetid://73815402017479" 
-imageLabel.BackgroundTransparency = 1  
+imageLabel.Image = "rbxassetid://73815402017479"  -- Image ID
+imageLabel.BackgroundTransparency = 1  -- Make image background transparent
 imageLabel.Parent = frame
 
-
+-- Create the TextBox for entering player's name
 local nameInputBox = Instance.new("TextBox")
 nameInputBox.Size = UDim2.new(0, 250, 0, 50)
 nameInputBox.Position = UDim2.new(0.5, -125, 0.3, 0)
 nameInputBox.PlaceholderText = "Enter Username or Display Name"
 nameInputBox.Parent = frame
 
+-- Create the Button for Flinging the Player
 local flingButton = Instance.new("TextButton")
 flingButton.Size = UDim2.new(0, 250, 0, 50)
 flingButton.Position = UDim2.new(0.5, -125, 0.6, 0)
 flingButton.Text = "Fling Player"
 flingButton.Parent = frame
 
+-- Variables for Dragging the GUI
+local dragging = false
+local dragInput = nil
+local startPos = nil
 
+-- Function to enable dragging
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		startPos = input.Position - frame.Position
+		dragInput = input
+	end
+end)
+
+-- Function to update position while dragging
+frame.InputChanged:Connect(function(input)
+	if dragging and input == dragInput then
+		frame.Position = UDim2.new(0, input.Position.X - startPos.X, 0, input.Position.Y - startPos.Y)
+	end
+end)
+
+-- Function to stop dragging
+frame.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
+	end
+end)
+
+-- Fling and Teleport function with partial name search
 local function flingPlayer(playerName)
 	local player = game.Players.LocalPlayer
 
-
+	-- Search for players whose name starts with the input playerName
 	local targetPlayer = nil
 	for _, potentialPlayer in ipairs(game.Players:GetPlayers()) do
 		if string.lower(potentialPlayer.Name):sub(1, #playerName) == string.lower(playerName) then
@@ -51,29 +78,30 @@ local function flingPlayer(playerName)
 	if targetPlayer then
 		local character = targetPlayer.Character
 		if character and character:FindFirstChild("HumanoidRootPart") then
-
+			-- Fling the target player by applying force with math.huge
 			local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 			local flingForce = Instance.new("BodyVelocity")
 			flingForce.MaxForce = Vector3.new(math.huge, math.huge, math.huge)  -- Infinite force
 			flingForce.Velocity = Vector3.new(math.huge, math.huge, math.huge)  -- Infinite velocity
 			flingForce.Parent = humanoidRootPart
 
-
+			-- Remove the fling force after a short time
 			game.Debris:AddItem(flingForce, 0.1)
 
+			-- Teleport the player executing the fling action to the target continuously
 			local originalPosition = player.Character.HumanoidRootPart.Position
 			local teleporting = true
 			local timeElapsed = 0
 			local teleportDuration = 3
 
-
+			-- Teleporting loop
 			while teleporting and timeElapsed < teleportDuration do
-				player.Character:SetPrimaryPartCFrame(character.HumanoidRootPart.CFrame)
-				wait(0)
-				timeElapsed = timeElapsed + 0
+				player.Character:SetPrimaryPartCFrame(CFrame.new(character.HumanoidRootPart.Position))
+				wait(0.1)
+				timeElapsed = timeElapsed + 0.1
 			end
 
-	
+			-- Return the player back to their original position after 3 seconds
 			if teleporting then
 				player.Character:SetPrimaryPartCFrame(CFrame.new(originalPosition))
 			end
@@ -83,7 +111,7 @@ local function flingPlayer(playerName)
 	end
 end
 
-
+-- Connect the button to the fling function
 flingButton.MouseButton1Click:Connect(function()
 	local playerName = nameInputBox.Text
 	if playerName ~= "" then
@@ -92,3 +120,4 @@ flingButton.MouseButton1Click:Connect(function()
 		warn("Please enter a player's name.")
 	end
 end)
+
